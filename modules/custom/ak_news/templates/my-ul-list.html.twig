@@ -1,0 +1,17 @@
+<div class="row">
+    <div class="col-md-6 ">
+        TOP 5 NEWS
+        <span style = "padding-left:80px;">Reported on</span>
+    </div>
+</div>
+{% for news in ns_var %}
+
+    <div class="row">
+        <div class="col-md-6 ">
+            <a href="/node/{{news.nid}}">{{ news.title }}</a>
+            
+            <span style = "padding-left:80px;">{{ news.field_news_date_value }}</span>
+        </div>
+    </div>
+
+{% endfor %}

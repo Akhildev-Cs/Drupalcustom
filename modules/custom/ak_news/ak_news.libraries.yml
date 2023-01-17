@@ -1,0 +1,5 @@
+edit_form:
+  js:
+    js/edit_form.js: {}
+  dependencies:
+    - core/jquery

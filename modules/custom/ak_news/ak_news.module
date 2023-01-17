@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function ak_news_theme() {
+  return [
+    'my_ul_list' => [
+      'variables' => [
+        'ns_var' => [],
+      ],
+    ],
+  ];
+}
+
+function ak_news_preprocess_node(&$variables) {
+  if ($variables['node']->bundle() === 'career'){
+    $from_date = date('Y-m-d',strtotime($variables['node']->field_from->value));
+    $to_date = date('Y-m-d',strtotime($variables['node']->field_apply_to->value));
+    // dump($variables['node']->field_apply_now);
+    $variables['#attached']['library'][] = 'ak_news/edit_form';
+    if ($from_date < date('Y-m-d') && $to_date > date('Y-m-d')){
+      $variables['#attached']['drupalSettings']['custom_workflow'] = 'yes';
+    }
+  } 
+  
+
+}
