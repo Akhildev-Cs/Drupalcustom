@@ -1,0 +1,8 @@
+name: OTP authentication
+type: module
+description: Two step verification using email otp
+package: Custom
+core: 10.x
+core_version_requirement: ^8 || ^9 || ^10
+dependencies:
+  - pet

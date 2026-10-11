@@ -1,0 +1,17 @@
+
+
+otp_authentication.settings_form:
+  path: '/admin/config/system/otp-authentication'
+  defaults:
+    _title: 'OTP authentication settings'
+    _form: 'Drupal\otp_authentication\Form\SettingsForm'
+  requirements:
+    _permission: 'administer otp_authentication configuration'
+
+otp_authentication.otp_verification_form:
+  path: '/auth/otp-verification'
+  defaults:
+    _form: '\Drupal\otp_authentication\Form\OtpVerificationForm'
+    _title: 'OTP Verification Form'
+  requirements:
+    _permission: 'access content'

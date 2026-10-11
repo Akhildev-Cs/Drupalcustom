@@ -1,0 +1,6 @@
+services:
+  otp_authentication.event_subscriber:
+    class: Drupal\otp_authentication\EventSubscriber\OtpAuthenticationSubscriber
+    arguments: ['@messenger', '@database', '@session_manager']
+    tags:
+      - { name: event_subscriber }

@@ -1,0 +1,4 @@
+administer otp_authentication configuration:
+  title: 'Administer otp_authentication configuration'
+  description: 'Optional description.'
+  restrict access: true

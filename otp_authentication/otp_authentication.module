@@ -1,0 +1,121 @@
+<?php
+use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
+use Drupal\Core\Session\SessionManagerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\pet\Entity\Pet;
+
+/**
+ * @file
+ * Primary module hooks for OTP authentication module.
+ *
+ * @DCG
+ * This file is no longer required in Drupal 8.
+ * @see https://www.drupal.org/node/2217931
+ */
+function otp_authentication_user_login(UserInterface $account) {
+  $uid = $account->uid;
+  $otp_enabled = \Drupal::config('system.site')->get('otp_enabled');
+  $otp_enabled =true;
+  if ($account->id() !== 1 && $otp_enabled) {
+    // Generate and store OTP code (refer to previous responses for details)
+    $otp_code = generateAndStoreOtp($account);
+  } 
+}
+function generateAndStoreOtp($account) {
+
+  $uid = $account->id();
+  $database = \Drupal::database();
+  $query = $database->select('otp_authentication', 'u')
+  ->fields('u', ['no_of_attempts', 'expire','otp_verified'])
+  ->condition('uid', $uid);
+  $old_user = $query->execute()->fetchAll(); 
+  
+  if (!empty($old_user)) {
+  //   $verified_user = $old_user->otp_verified;
+  //   $expired_token = $old_user->expire;
+  //   $no_of_attempts = $old_user->no_of_attempts;
+  //   if ($verified_user) {
+  //     if($verified_user == 1){
+  //       return;
+  //     } 
+  //     else if ($expired_token){
+  //       if($expired_token < time()) {
+  //         expierd_entry_delete();
+  //       }
+  //     }
+  //   }
+  }
+  else {
+    $human_readable_otp = rand(100000, 999999);
+    $user_mail = $account->get('mail')->value;
+    call_otp_mail($user_mail,$human_readable_otp);
+    $database->insert('otp_authentication')->fields([
+      'uid' => $uid,
+      'otp' => $human_readable_otp,
+      'expire' => strtotime("+15 minutes", time()),
+      'created' => time(),
+      'no_of_attempts' => 0
+    ])->execute();
+  }
+}
+
+function call_otp_mail($user_mail,$human_readable_otp){
+  $pet_id = \Drupal::config('otp_authentication.settings')->get('otp_mail_template');
+  if ($pet_id != FALSE) {
+    $pid = $pet_id;
+    $pet_details = Pet::load($pet_id);
+    $subject = $pet_details->get('subject')->value;
+    $mail_body = $pet_details->get('mail_body')->value;
+    $mail_body = str_replace('[OTP]', $human_readable_otp, $mail_body);
+    $options = ['subject' => $subject, 'body' => $mail_body, 'one_time_password_id' => $human_readable_otp];
+    pet_send_mail($pid, $user_mail, $options);
+  }
+}
+
+function expierd_entry_delete($uid) {
+  $database = \Drupal::database();
+  $database->delete('otp_authentication')
+  ->condition('uid', $uid)
+  ->execute();
+  \Drupal::messenger()->addMessage($this->t('you exceeds the OTP regeneration limits. Please do login again.'));
+  user_logout();
+}
+
+function otp_authentication_user_logout() {
+  $current_user = \Drupal::currentUser();
+  $current_user_id = $current_user->id();
+  $database = \Drupal::database();
+  $database->delete('otp_authentication')
+  ->condition('uid', $current_user_id)
+  ->execute();
+}
+
+function login_detail_verified() {
+  $database = \Drupal::database();
+  $query = $database->select('otp_authentication', 'u')
+  ->fields('u', ['no_of_attempts', 'expire','otp_verified'])
+  ->condition('uid', $uid);
+  $old_user = $query->execute(); 
+  if (!empty($old_user)) {
+    $verified_user = $old_user->otp_verified;
+    $expired_token = $old_user->expire;
+    if ($verified_user) {
+      if($verified_user == 1){
+        return;
+      }
+      else if ($expired_token){
+        if($expired_token < time()) {
+          expierd_entry_delete($uid);
+        }
+        else {
+          // Redirect to OTP entry page
+          $url = \Drupal\Core\Url::fromRoute('otp_authentication.otp_verification_form')->toString();
+          // Create a RedirectResponse object with the login page URL.
+          $response = new RedirectResponse($url);
+          $response->send();
+        }
+      }
+    }
+  }
+}
